@@ -196,9 +196,11 @@ class Yolov8Node(Node):
                     aux_msg.score = hypothesis[i]["score"]
 
                     aux_msg.bbox = boxes[i]
+                    current_box_size = boxes[i].size.x * boxes[i].size.y
 
-                    if boxes[i]["size"] > max_bounding_size:
+                    if current_box_size > max_bounding_size:
                         best_detection_index = i
+                        max_bounding_size = current_box_size
 
                 if results.masks:
                     aux_msg.mask = masks[i]
