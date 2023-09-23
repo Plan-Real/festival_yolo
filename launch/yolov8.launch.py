@@ -97,7 +97,7 @@ def generate_launch_description():
         name="debug_node",
         namespace=namespace,
         remappings=[("image_raw", input_image_topic),
-                    ("detections", "tracking")],
+                    ("detections", "detections")],
     )
     rs_launch_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -109,8 +109,16 @@ def generate_launch_description():
             ]
         ),
         launch_arguments={
+            "align_depth.enable": "false",
+            "depth_enable": "false",
+            "spatial_filter.enable": "true",
+            "temporal_filter.enable": "true",
+            "hole_filling.enable": "true",
+            "decimation_filter.enable": "true",
             "pointcloud.enable": "True",
-            "depth_module.profile": "640x480x15"
+            "pointcloud.ordered_pc": "True",
+            "depth_module.profile": "640x480x30",
+            "pointcloud.stream_index_filter": "1"
             # 'use_provided_red': 'True',
             # 'new_background_r': TextSubstitution(text=str(colors['background_r']))
         }.items(),
@@ -127,7 +135,7 @@ def generate_launch_description():
     ld.add_action(namespace_cmd)
 
     ld.add_action(detector_node_cmd)
-    ld.add_action(tracking_node_cmd)
+    # ld.add_action(tracking_node_cmd)
     ld.add_action(debug_node_cmd)
     ld.add_action(rs_launch_cmd)
     return ld
