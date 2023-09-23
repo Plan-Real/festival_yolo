@@ -182,6 +182,11 @@ class Yolov8Node(Node):
             # create detection msgs
             detections_msg = DetectionArray()
 
+            # create biggest box detection msg 
+            max_bounding_size = 0
+            best_detection_index = 0
+            best_detection_msg = DetectionArray()
+
             for i in range(len(results)):
                 aux_msg = Detection()
 
@@ -192,6 +197,9 @@ class Yolov8Node(Node):
 
                     aux_msg.bbox = boxes[i]
 
+                    if boxes[i]["size"] > max_bounding_size:
+                        best_detection_index = i
+
                 if results.masks:
                     aux_msg.mask = masks[i]
 
@@ -201,8 +209,9 @@ class Yolov8Node(Node):
                 detections_msg.detections.append(aux_msg)
 
             # publish detections
-            detections_msg.header = msg.header
-            self._pub.publish(detections_msg)
+            best_detection_msg.detections.append(detections_msg[best_detection_index])
+            best_detection_msg.header = msg.header
+            self._pub.publish(best_detection_msg)
 
 
 def main():
