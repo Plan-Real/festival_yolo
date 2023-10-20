@@ -43,7 +43,7 @@ class YoloNode(Node):
         self.tf_buffer = Buffer()
 
         # ros2 timer
-        self.create_timer(0.1, self.timer_callback)
+        self.create_timer(0.033, self.timer_callback)
 
         self.model = YOLO(self.model_path)
         self.face_detector = FaceDetector(self.model)
@@ -67,8 +67,8 @@ class YoloNode(Node):
 
         # relative distance
         x = depth*math.cos(x_degree)*math.cos(y_degree)
-        y = x*math.tan(y_degree)
-        z = x*math.tan(x_degree)
+        z = -x*math.tan(y_degree)
+        y = -x*math.tan(x_degree)
 
         # publish tf
         transform = TransformStamped()
