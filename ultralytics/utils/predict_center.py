@@ -9,11 +9,31 @@ class FaceDetector(object):
         self.model = model
         self.prev_p1 = 0
         self.prev_p2 = 0
+        self.current_frame = None
         
         if not self._realsense_open():
             print("connection failed")
             exit()
+    
+    def streaming_server_setting(self):
+        from flask import Flask
+        from flask_socketio import SocketIO, emit
+        import base64
 
+        self.app = Flask(__name__)
+        self.socketio = SocketIO(self.app, cors_allowed_origins='*')
+        
+        @self.socketio.on("get_video")
+        def push_video():
+            if self.current_frame is not None:
+                _, buffer = cv2.imencode(".jpg", self.current_frame)
+                frame = base64.b64encode(buffer).decode('utf-8')
+                b64_src = 'data:image/jpeg;base64,'
+                stringData = b64_src + frame
+                emit("video_frame", stringData)
+                
+        self.socketio.run(self.app)
+    
     def stream(self):
         frames = self.pipeline.wait_for_frames()
         aligned_frames = self.align.process(frames)
@@ -23,6 +43,7 @@ class FaceDetector(object):
         color_frame = aligned_frames.get_color_frame()
 
         color_image = np.asanyarray(color_frame.get_data())
+        self.current_frame = color_frame
         return color_image
         
     def get_face_info(self, color_image):
