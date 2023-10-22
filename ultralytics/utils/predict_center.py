@@ -16,6 +16,9 @@ class FaceDetector(object):
             exit()
     
     def streaming_server_setting(self):
+        """
+            Building Server for Streaming Socket
+        """
         from flask import Flask
         from flask_socketio import SocketIO, emit
         import base64
@@ -35,6 +38,9 @@ class FaceDetector(object):
         self.socketio.run(self.app)
     
     def stream(self):
+        """
+            Looping Process -> update frame (: FPS)
+        """
         frames = self.pipeline.wait_for_frames()
         aligned_frames = self.align.process(frames)
 
@@ -44,10 +50,13 @@ class FaceDetector(object):
 
         color_image = np.asanyarray(color_frame.get_data())
         self.current_frame = color_frame
-        return color_image
+        return True
         
-    def get_face_info(self, color_image):
-        color_image, center = self.search_center(color_image)
+    def get_face_info(self):
+        """
+            Looping Process -> return coordinate by Using Yolo to find face 
+        """
+        _, center = self._search_center(self.current_frame)
         center_depth = -1
         if center != -1:
             center_depth = self.aligned_depth_info.get_distance(center[0], center[1])
@@ -57,9 +66,15 @@ class FaceDetector(object):
         return self.prev_p1, self.prev_p2, center_depth
     
     def release(self):
+        """
+            Camera Stream Release
+        """
         self.pipeline.stop()
 
     def _realsense_open(self):
+        """
+            RealSense Camera connecting
+        """
         self.pipeline = rs.pipeline()
         self.config = rs.config()
         pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
@@ -85,7 +100,10 @@ class FaceDetector(object):
         self.align = rs.align(self.align_to)
         return True
 
-    def search_center(self, frame):
+    def _search_center(self, frame):
+        """
+            Find Face center coordinate By Using Yolo_v8-Face
+        """
         results = self.model.predict(
             source=frame,
             verbose=False,
