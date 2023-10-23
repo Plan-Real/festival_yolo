@@ -3,6 +3,7 @@ import math
 from ultralytics import YOLO
 from ultralytics.utils.predict_center import FaceDetector
 import numpy as np
+from threading import Thread
 
 import rclpy
 from rclpy.node import Node
@@ -47,6 +48,9 @@ class YoloNode(Node):
 
         self.model = YOLO(self.model_path)
         self.face_detector = FaceDetector(self.model)
+        self.thread = Thread(
+            target=self.face_detector.streaming_server_setting)
+        self.thread.start()
 
     def search_center(self, frame):
         return self.face_detector.search_center(frame)
@@ -100,13 +104,14 @@ class YoloNode(Node):
 
     def timer_callback(self):
         frame = self.face_detector.stream()
-        x, y, depth = self.face_detector.get_face_info(frame)
+        x, y, depth = self.face_detector.get_face_info()
         if x != -1:
             self.publish_tf(x, y, depth)
-        self.pub_compressed(frame)
+        # self.pub_compressed(frame)
         self.pub_image(frame)
 
     def __del__(self):
+        self.thread.join()
         self.face_detector.release()
 
 

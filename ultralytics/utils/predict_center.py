@@ -10,11 +10,11 @@ class FaceDetector(object):
         self.prev_p1 = 0
         self.prev_p2 = 0
         self.current_frame = None
-        
+
         if not self._realsense_open():
             print("connection failed")
             exit()
-    
+
     def streaming_server_setting(self):
         """
             Building Server for Streaming Socket
@@ -25,7 +25,7 @@ class FaceDetector(object):
 
         self.app = Flask(__name__)
         self.socketio = SocketIO(self.app, cors_allowed_origins='*')
-        
+
         @self.socketio.on("get_video")
         def push_video():
             if self.current_frame is not None:
@@ -34,9 +34,9 @@ class FaceDetector(object):
                 b64_src = 'data:image/jpeg;base64,'
                 stringData = b64_src + frame
                 emit("video_frame", stringData)
-                
+
         self.socketio.run(self.app)
-    
+
     def stream(self):
         """
             Looping Process -> update frame (: FPS)
@@ -49,9 +49,9 @@ class FaceDetector(object):
         color_frame = aligned_frames.get_color_frame()
 
         color_image = np.asanyarray(color_frame.get_data())
-        self.current_frame = color_frame
-        return True
-        
+        self.current_frame = color_image
+        return color_image
+
     def get_face_info(self):
         """
             Looping Process -> return coordinate by Using Yolo to find face 
@@ -59,12 +59,13 @@ class FaceDetector(object):
         _, center = self._search_center(self.current_frame)
         center_depth = -1
         if center != -1:
-            center_depth = self.aligned_depth_info.get_distance(center[0], center[1])
+            center_depth = self.aligned_depth_info.get_distance(
+                center[0], center[1])
             self.prev_p1 = center[0]
             self.prev_p2 = center[1]
             return center[0], center[1], center_depth
         return self.prev_p1, self.prev_p2, center_depth
-    
+
     def release(self):
         """
             Camera Stream Release
@@ -84,9 +85,11 @@ class FaceDetector(object):
         self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 
         if device_product_line == "L500":
-            self.config.enable_stream(rs.stream.color, 960, 540, rs.format.bgr8, 30)
+            self.config.enable_stream(
+                rs.stream.color, 960, 540, rs.format.bgr8, 30)
         else:
-            self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+            self.config.enable_stream(
+                rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
         self.profile = self.pipeline.start(self.config)
 
@@ -124,5 +127,3 @@ class FaceDetector(object):
             center = (int((p1[0] + p2[0]) // 2), int((p1[1] + p2[1]) // 2))
 
         return frame, center
-
-    
