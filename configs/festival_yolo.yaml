@@ -1,0 +1,9 @@
+festival_yolo_node:
+  ros__parameters:
+    model: yolov8n-face.pt
+    camera_frame: camera_link
+    face_frame: face
+    FOV_H: 69
+    FOV_V: 42
+    frame_width: 640
+    frame_height: 480
