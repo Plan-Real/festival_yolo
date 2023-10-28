@@ -35,7 +35,7 @@ class FaceDetector(object):
                 stringData = b64_src + frame
                 emit("video_frame", stringData)
 
-        self.socketio.run(self.app)
+        self.socketio.run(self.app, host='0.0.0.0')
 
     def stream(self):
         """
