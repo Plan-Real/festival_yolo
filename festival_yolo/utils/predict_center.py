@@ -35,7 +35,17 @@ class FaceDetector(object):
                 stringData = b64_src + frame
                 emit("video_frame", stringData)
 
-        self.socketio.run(self.app)
+        @self.socketio.on("start")
+        def Start():
+            # Robot Start
+            return True
+
+        @self.socketio.on("end")
+        def End():
+            # Robot End
+            return True
+
+        self.socketio.run(self.app, host='0.0.0.0')
 
     def stream(self):
         """
@@ -90,6 +100,7 @@ class FaceDetector(object):
         else:
             self.config.enable_stream(
                 rs.stream.color, 640, 480, rs.format.bgr8, 30)
+            # self.config.enable_stream(rs.stream.depth, 1280, 720, rs.format.z16, 6)
 
         self.profile = self.pipeline.start(self.config)
 
