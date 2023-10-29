@@ -10,6 +10,7 @@ class FaceDetector(object):
         self.prev_p1 = 0
         self.prev_p2 = 0
         self.current_frame = None
+        print("FaceDetector init")
 
         if not self._realsense_open():
             print("connection failed")
@@ -37,15 +38,21 @@ class FaceDetector(object):
 
         @self.socketio.on("start")
         def Start():
-            # Robot Start
+            self.start_fn()
             return True
 
         @self.socketio.on("end")
-        def End():
-            # Robot End
+        def Stop():
+            self.stop_fn()
             return True
 
         self.socketio.run(self.app, host='0.0.0.0')
+
+    def set_start(self, start):
+        self.start_fn = start
+
+    def set_stop(self, stop):
+        self.stop_fn = stop
 
     def stream(self):
         """
