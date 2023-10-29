@@ -1,23 +1,25 @@
+from typing import Iterator
 import cv2
 import math
 from ultralytics import YOLO
-from festival_yolo import FaceDetector
+from utils.predict_center import FaceDetector
 
 import numpy as np
 from threading import Thread
 
 import rclpy
 from rclpy.node import Node
+from rclpy.service import Service
 from sensor_msgs.msg import Image, CompressedImage
 from geometry_msgs.msg import TransformStamped
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+from std_srvs.srv import Trigger
 
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 import os
-
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
 parent_directory = os.path.dirname(current_directory)
@@ -36,7 +38,6 @@ class YoloNode(Node):
         self.model = self.get_parameter("model").value
         self.model_path = os.path.join(
             parent_directory, "checkpoints", self.model)
-        print(self.model_path)
         self.camera_link = self.get_parameter("camera_frame").value
         self.face_frame = self.get_parameter("face_frame").value
         self.FOV_H = self.get_parameter("FOV_H").value
@@ -49,19 +50,28 @@ class YoloNode(Node):
         self.compress_pub = self.create_publisher(
             CompressedImage, "yolo/compressed", 10)
 
+        # ros2 service
+        self.pic_start_client = self.create_client(Trigger, "pic_start_srv")
+        self.pic_stop_client = self.create_client(Trigger, "pic_stop_srv")
+
         # ros2 tf broadcaster
         self.tf_broadcaster = TransformBroadcaster(self)
         self.tf_buffer = Buffer()
-
+        
         stream_group = ReentrantCallbackGroup()
-        yolo_group = None
+        yolo_group = ReentrantCallbackGroup()
 
         # ros2 timer
         self.create_timer(0.1, self.timer_callback_yolo, callback_group=yolo_group)
-        self.create_timer(0.01, self.timer_callback_stream, callback_group=stream_group)
+        self.create_timer(0.05, self.timer_callback_stream, callback_group=stream_group)
 
         self.yolo = YOLO(self.model_path)
         self.face_detector = FaceDetector(self.yolo)
+
+        # binding
+        self.face_detector.set_start(self.start)
+        self.face_detector.set_stop(self.stop)
+
         self.frame = None
         self.thread = Thread(
             target=self.face_detector.streaming_server_setting)
@@ -131,8 +141,36 @@ class YoloNode(Node):
                 self.get_logger().info("Human detected")
                 self.publish_tf(x, y, depth)
             else :
+                # pass
                 self.get_logger().info("Human not detected")
             self.pub_image(self.frame)
+
+    def start(self):
+        request = Trigger.Request()
+
+        # while not self.pic_start_client.wait_for_service(timeout_sec=1.0):
+        self.get_logger().info("start")
+        future = self.pic_start_client.call(request)
+        # rclpy.spin_until_future_complete(self, future)
+        # try:
+        #     response = future.result()
+        #     self.get_logger().info("Result of start : %r" % (response.success))
+        # except Exception as e:
+        #     self.get_logger().info("Service call failed %r" % (e,))
+        # return response.success
+    
+    def stop(self):
+        request = Trigger.Request()
+        # while not self.pic_stop_client.wait_for_service(timeout_sec=1.0):
+        self.get_logger().info("stop")
+        future = self.pic_stop_client.call(request)
+        # rclpy.spin_until_future_complete(self, future)
+        # try:
+        #     response = future.result()
+        #     self.get_logger().info("Result of stop : %r" % (response.success))
+        # except Exception as e:
+        #     self.get_logger().info("Service call failed %r" % (e,))
+        # return response.success
 
     def __del__(self):
         self.thread.join()
@@ -144,7 +182,6 @@ if __name__ == '__main__':
     node = YoloNode()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
-
 
     try:
         node.get_logger().info("Beginning client, shut down with CTRL-C")
