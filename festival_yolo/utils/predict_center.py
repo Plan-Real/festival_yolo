@@ -76,8 +76,7 @@ class FaceDetector(object):
         _, center = self._search_center(self.current_frame)
         center_depth = -1
         if center != -1:
-            center_depth = self.aligned_depth_info.get_distance(
-                center[0], center[1])
+            center_depth = self.aligned_depth_info.get_distance(center[0], center[1])
             self.prev_p1 = center[0]
             self.prev_p2 = center[1]
             return center[0], center[1], center_depth
@@ -125,11 +124,12 @@ class FaceDetector(object):
         """
             Find Face center coordinate By Using Yolo_v8-Face
         """
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.model.predict(
             source=frame,
             verbose=False,
             stream=False,
-            conf=0.25,
+            conf=0.6,
             device="cuda:0" if torch.cuda.is_available() else "cpu",
             half=False,
             classes=0,
@@ -140,8 +140,8 @@ class FaceDetector(object):
         center = -1
 
         if len(box):
-            p1, p2 = (int(box[0][0]), int(box[0][1])
-                      ), (int(box[0][2]), int(box[0][3]))
-            center = (int((p1[0] + p2[0]) // 2), int((p1[1] + p2[1]) // 2))
+            if not (torch.isnan(box[0][0]) or torch.isnan(box[0][1]) or torch.isnan(box[0][2]) or torch.isnan(box[0][3])):
+                p1, p2 = (int(box[0][0]), int(box[0][1])), (int(box[0][2]), int(box[0][3]))
+                center = (int((p1[0] + p2[0]) // 2), int((p1[1] + p2[1]) // 2))
 
         return frame, center

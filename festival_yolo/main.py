@@ -58,12 +58,12 @@ class YoloNode(Node):
         self.tf_broadcaster = TransformBroadcaster(self)
         self.tf_buffer = Buffer()
         
-        stream_group = ReentrantCallbackGroup()
+        stream_group = None
         yolo_group = ReentrantCallbackGroup()
 
         # ros2 timer
-        self.create_timer(0.1, self.timer_callback_yolo, callback_group=yolo_group)
-        self.create_timer(0.05, self.timer_callback_stream, callback_group=stream_group)
+        self.create_timer(0.03, self.timer_callback_yolo, callback_group=yolo_group)
+        self.create_timer(0.03, self.timer_callback_stream, callback_group=stream_group)
 
         self.yolo = YOLO(self.model_path)
         self.face_detector = FaceDetector(self.yolo)
@@ -95,9 +95,16 @@ class YoloNode(Node):
         y_degree = math.radians(y_degree)
 
         # relative distance
-        x = depth*math.cos(x_degree)*math.cos(y_degree)
-        z = -x*math.tan(y_degree)
-        y = -x*math.tan(x_degree)
+        if 0.0 < depth <= 1.5:
+            x = depth*math.cos(x_degree)*math.cos(y_degree)
+            z = -x*math.tan(y_degree)
+            y = -x*math.tan(x_degree)
+            self.depth = depth
+
+        else:
+            x = self.depth*math.cos(x_degree)*math.cos(y_degree)
+            z = -x*math.tan(y_degree)
+            y = -x*math.tan(x_degree)
 
         # publish tf
         transform = TransformStamped()
@@ -111,7 +118,10 @@ class YoloNode(Node):
         transform.transform.rotation.y = 0.5
         transform.transform.rotation.z = -0.5
         transform.transform.rotation.w = 0.5
-        self.tf_broadcaster.sendTransform(transform)
+        if x ==0 :
+            pass
+        else:
+            self.tf_broadcaster.sendTransform(transform)
 
     def pub_image(self, frame):
         image_msg = Image()
