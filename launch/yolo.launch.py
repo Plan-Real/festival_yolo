@@ -11,20 +11,20 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
 
     params = LaunchConfiguration(
-        "festival_yolo_params",
+        "snapbot_yolo_params",
         default=os.path.join(
             get_package_share_directory(
-                "festival_yolo"), "configs", "festival_yolo.yaml"
+                "snapbot_yolo"), "configs", "snapbot_yolo.yaml"
         ),
     )
     params_cmd = DeclareLaunchArgument(
-        "festival_yolo_params",
+        "snapbot_yolo_params",
         default_value=params,
         description="Path to the ROS2 parameters file to use for all nodes",
     )
     model_path = os.path.join(
         get_package_share_directory(
-            "festival_yolo"), "checkpoints"
+            "snapbot_yolo"), "checkpoints"
     )
 
 
@@ -32,9 +32,9 @@ def generate_launch_description():
     # NODES
     #
     yolo_node_cmd = Node(
-        package="festival_yolo",
+        package="snapbot_yolo",
         executable="yolo",
-        name="festival_yolo_node",
+        name="snapbot_yolo_node",
         parameters=[params],
         output="screen",
     )

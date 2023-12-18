@@ -1,4 +1,4 @@
-festival_yolo_node:
+snapbot_yolo_node:
   ros__parameters:
     model: yolov8n-face.pt
     camera_frame: camera_link

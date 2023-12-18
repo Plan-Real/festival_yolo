@@ -1,7 +1,7 @@
 from setuptools import setup
 from glob import glob
-package_name = "festival_yolo"
-utils = "festival_yolo/utils"
+package_name = "snapbot_yolo"
+utils = "snapbot_yolo/utils"
 
 setup(
     name=package_name,
@@ -18,12 +18,12 @@ setup(
     zip_safe=True,
     maintainer="jeonghan",
     maintainer_email="kimjh9813@naver.com",
-    description="festival ur yolo",
+    description="snapbot ur yolo",
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "yolo = festival_yolo.main:main"
+            "yolo = snapbot_yolo.main:main"
         ],
     },
 )
